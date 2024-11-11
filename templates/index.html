@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Assistant</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #e0e7ff; /* Light blue for a softer look */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        color: #333;
+    }
+
+    .container {
+        text-align: center;
+        background-color: white;
+        padding: 20px 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        width: 90%;
+        max-width: 500px;
+    }
+
+    h1 {
+        font-size: 2rem;
+        color: #374151;
+    }
+
+    .input-section {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .text-input {
+        flex: 1;
+        padding: 10px;
+        font-size: 1rem;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    .mic-btn, .send-btn {
+        background-color: #008CBA;
+        color: white;
+        font-size: 1.5rem;
+        padding: 12px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+    }
+
+    .send-btn {
+        border-radius: 5px;
+        padding: 10px 15px;
+    }
+
+    .mic-btn:active, .send-btn:active {
+        background-color: #005f73;
+    }
+
+    #conversation-history {
+        margin-top: 20px;
+        font-size: 1rem;
+        color: #374151;
+        max-height: 300px;
+        overflow-y: auto;
+        background-color: #f9fafb;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    .history-entry {
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: #f3f4f6;
+    }
+
+    .user-input {
+        font-weight: bold;
+        color: #2563eb;
+    }
+
+    .ai-response {
+        margin-top: 5px;
+        color: #111827;
+    }
+
+</style>
+<body>
+    <div class="container">
+        <h1>Gemini Voice & Chat Assistant</h1>
+
+        <div class="input-section">
+            <input type="text" id="text-input" class="text-input" placeholder="Type your message here">
+            <button id="send-btn" class="send-btn">➤</button>
+            <button id="start-record-btn" class="mic-btn">🎤</button>
+        </div>
+
+        <div id="response-text"></div>
+
+        <div id="conversation-history">
+            <!-- Conversation history will be dynamically updated here -->
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+
+<script>
+    const startRecordBtn = document.getElementById('start-record-btn');
+    const sendBtn = document.getElementById('send-btn');
+    const textInput = document.getElementById('text-input');
+    const responseText = document.getElementById('response-text');
+    const conversationHistory = document.getElementById('conversation-history');
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.onstart = function() {
+        responseText.innerHTML = 'Listening...';
+    };
+
+    recognition.onspeechend = function() {
+        recognition.stop();
+    };
+
+    recognition.onresult = function(event) {
+        const userInput = event.results[0][0].transcript;
+        responseText.innerHTML = `You said: "${userInput}"`;
+        sendToServer(userInput);
+    };
+
+    startRecordBtn.addEventListener('click', () => {
+        recognition.start();
+    });
+
+    sendBtn.addEventListener('click', () => {
+        const userInput = textInput.value;
+        if (userInput) {
+            sendToServer(userInput);
+            textInput.value = '';
+        }
+    });
+
+    function sendToServer(userInput) {
+        fetch('/process_voice', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ user_input: userInput }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            const aiResponse = data.response;
+            responseText.innerHTML = `AI Response: "${aiResponse}"`;
+            updateConversationHistory(data.conversation_history);
+            speakResponse(aiResponse);
+        })
+        .catch(error => {
+            responseText.innerHTML = 'Error processing request.';
+        });
+    }
+
+    function updateConversationHistory(history) {
+        conversationHistory.innerHTML = '';
+        history.forEach(entry => {
+            const historyEntry = document.createElement('div');
+            historyEntry.classList.add('history-entry');
+
+            const userInput = document.createElement('div');
+            userInput.classList.add('user-input');
+            userInput.innerHTML = `You: ${entry.user}`;
+
+            const aiResponse = document.createElement('div');
+            aiResponse.classList.add('ai-response');
+            aiResponse.innerHTML = `AI: ${entry.ai}`;
+
+            historyEntry.appendChild(userInput);
+            historyEntry.appendChild(aiResponse);
+
+            conversationHistory.appendChild(historyEntry);
+        });
+    }
+
+    function speakResponse(text) {
+        const synth = window.speechSynthesis;
+        const utterance = new SpeechSynthesisUtterance(text);
+        synth.speak(utterance);
+    }
+</script>
+</html>
