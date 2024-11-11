@@ -4,6 +4,8 @@
 This Chatbot & Voice Assistant is powered by Python, Google Generative AI, Flask, and JavaScript.
 By leveraging the Google Gemini model, I created a fun interface that allows for users to talk to the Gemini model as well as ask it questions as you would a regular chat bot!
 
+Check it out here: https://gemini-voice-chat-assistant.onrender.com/
+
 # How to run?
 ### STEPS:
 
