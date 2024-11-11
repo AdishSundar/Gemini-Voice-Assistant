@@ -1,4 +1,4 @@
-# Gemini-Voice&Chat-Assistant
+# Gemini Voice & Chat Assistant
 
 ## About the App
 This Chatbot & Voice Assistant is powered by Python, Google Generative AI, Flask, and JavaScript.
